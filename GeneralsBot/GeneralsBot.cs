@@ -25,10 +25,14 @@ namespace GeneralsBot {
             _socket.On(Socket.EVENT_CONNECT, () => {
                 Console.WriteLine("Connected");
 
-                _socket.Emit("join_private",    "mtpe", _userId);
-                _socket.Emit("set_force_start", "mtpe", _userId);
+                _socket.Emit("play", _userId);
+                //_socket.Emit("join_private",    "mtpe", _userId);
+                _socket.Emit("set_force_start", 0, true);
             });
 
+            _socket.On("game_won", () => { Console.WriteLine("Won the game!"); });
+            _socket.On("game_lost", () => { Console.WriteLine("Lost the game!"); });
+            
             _socket.On("game_start",  GameStarted);
             _socket.On("game_update", GameUpdated);
 

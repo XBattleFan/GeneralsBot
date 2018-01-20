@@ -44,7 +44,7 @@ namespace GeneralsBot {
             return new Game(gameStartMessage.PlayerIndex, gameStartMessage.Usernames, gameStartMessage.Teams,
                             gameStartMessage.ReplayId, gameStartMessage.ChatRoom, gameStartMessage.TeamChatRoom,
                             gameStartMessage.GameType,
-                            new List<ITargetHeuristic>() { new ExpandHeuristic() });
+                            new List<ITargetHeuristic> { new ExpandHeuristic(), new CityHeuristic(), new AttackHeuristic() });
         }
 
         public void ApplyUpdate(GameUpdateMessage message) {
@@ -98,6 +98,10 @@ namespace GeneralsBot {
                     destValue[next] = referredMapTile.Units;
                 } else {
                     destValue[next] = 0;
+                    
+                    if (_map[referers[next]] is OccupiedTile otherTile) {
+                        destValue[next] = -otherTile.Units;
+                    }
                 }
                 
                 if (_map[next] is OccupiedTile tile && tile.Faction == _me && tile.Units > 1) {
@@ -107,7 +111,9 @@ namespace GeneralsBot {
                 }
 
                 if (!points.ContainsKey(next)) {
-                    points[next] = destValue[next] - next.NaiveMoveDistance(dest) * next.NaiveMoveDistance(dest);
+                    points[next] = destValue[next] - 5 * next.NaiveMoveDistance(dest);
+
+                    if (destValue[next] < -(_map.UnitsAt(next) / 2)) points[next] -= 10000;
                 }
 
                 foreach (Position p in next.SurroundingMoveable(_map)) {
@@ -121,6 +127,7 @@ namespace GeneralsBot {
 
             Position src = points.OrderByDescending(pair => pair.Value).Select(pair => pair.Key).FirstOrDefault();
             Console.WriteLine($"Issued move from {src.X} {src.Y} to {referers[src].X} {referers[src].Y}");
+            Console.WriteLine($"Playing with {_usernames.Aggregate((c, s) => c + " " + s)}");
             return (_map.UCoord(src.X, src.Y), _map.UCoord(referers[src].X, referers[src].Y), false);
         }
 

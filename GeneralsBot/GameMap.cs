@@ -40,19 +40,16 @@ namespace GeneralsBot {
                     case TILE_FOG:
                         return new FogTile();
 
-                        break;
                     case TILE_FOG_OBSTACLE:
                         return new ObstacleFogTile();
 
-                        break;
                     case TILE_EMPTY:
+                        if (hasCity) return new CityTile(TerrainAt(x, y), ArmyAt(x, y));
                         return new EmptyTile();
 
-                        break;
                     case TILE_MOUNTAIN:
                         return new MountainTile();
 
-                        break;
                     default:
                         if (hasCity) return new CityTile(TerrainAt(x, y), ArmyAt(x, y));
                         if (hasGeneral) return new GeneralTile(TerrainAt(x, y), ArmyAt(x, y));
@@ -66,7 +63,9 @@ namespace GeneralsBot {
         private int      TerrainAt(int   x, int y) => _terrainValues[UCoord(x, y)];
         private int      ArmyAt(int      x, int y) => _armyValues   [UCoord(x, y)];
         public  int      UCoord(int      x, int y) => x + y * Width;
-        public int UCoord(Position p)              => p.X + p.Y * Width;
+        public  int      UCoord(Position p)        => p.X + p.Y * Width;
+        public  int      UnitsAt(Position p)       => ArmyAt(p.X, p.Y);
+        public  int      TotalArmies(int index)    => _armyValues.Where((c, i) => _terrainValues[i] == index).Sum();
         private Position FromUCoord(int  c)        => new Position(c % Width, c / Width);
 
         public Position GeneralPosition(int playerIndex) {
