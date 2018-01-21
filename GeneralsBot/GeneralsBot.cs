@@ -19,7 +19,7 @@ namespace GeneralsBot {
 
             _socket.On(Socket.EVENT_DISCONNECT, () => {
                 Console.WriteLine("Disconnected from game server");
-                Environment.Exit(0);
+                _socket.Connect();
             });
 
             _socket.On(Socket.EVENT_CONNECT, () => {
@@ -30,8 +30,23 @@ namespace GeneralsBot {
                 _socket.Emit("set_force_start", 0, true);
             });
 
-            _socket.On("game_won", () => { Console.WriteLine("Won the game!"); });
-            _socket.On("game_lost", () => { Console.WriteLine("Lost the game!"); });
+            _socket.On("game_won", () => {
+                Console.WriteLine("Won the game!");
+                File.AppendAllLines("log", new []{ $"Won against {_game.Usernames}"});
+                _socket.Emit("chat_message", _game.ChatRoom, "Woo! Good game! :) If you'd like to give any feedback about how I played, please do so at https://goo.gl/forms/mCBjHBCDR3Ot96Gp2 ! This bot is actively developed so any feedback is appreciated :) (It doesn't currently monitor game chat)");
+                _socket.Emit("play", _userId);
+                //_socket.Emit("join_private",    "mtpe", _userId);
+                _socket.Emit("set_force_start", 0, true);
+            });
+            
+            _socket.On("game_lost", () => {
+                Console.WriteLine("Lost the game!");
+                File.AppendAllLines("log", new []{ $"Lost against {_game.Usernames}" });
+                _socket.Emit("chat_message", _game.ChatRoom, "Good game! If you'd like to give any feedback about how I played, please do so at https://goo.gl/forms/mCBjHBCDR3Ot96Gp2 ! This bot is actively developed so any feedback is appreciated :) (It doesn't currently monitor game chat)");
+                _socket.Emit("play", _userId);
+                //_socket.Emit("join_private",    "mtpe", _userId);
+                _socket.Emit("set_force_start", 0, true);
+            });
             
             _socket.On("game_start",  GameStarted);
             _socket.On("game_update", GameUpdated);

@@ -9,11 +9,11 @@ using GeneralsBot.TargetHeuristics;
 
 namespace GeneralsBot {
     public class Game {
+        public  readonly string        ChatRoom;
         private          int           _turn = 0;
         private readonly IList<string> _usernames;
         private readonly IList<int>    _teams;
         private readonly string        _replayId;
-        private readonly string        _chatRoom;
         private readonly string        _teamChatRoom;
         private readonly string        _gameType;
         private readonly int           _me;
@@ -34,7 +34,7 @@ namespace GeneralsBot {
             _usernames    = usernames;
             _teams        = teams;
             _replayId     = replayId;
-            _chatRoom     = chatRoom;
+            ChatRoom     = chatRoom;
             _teamChatRoom = teamChatRoom;
             _gameType     = gameType;
             _targetHeuristics = targetHeuristics;
@@ -127,8 +127,12 @@ namespace GeneralsBot {
 
             Position src = points.OrderByDescending(pair => pair.Value).Select(pair => pair.Key).FirstOrDefault();
             Console.WriteLine($"Issued move from {src.X} {src.Y} to {referers[src].X} {referers[src].Y}");
-            Console.WriteLine($"Playing with {_usernames.Aggregate((c, s) => c + " " + s)}");
+            Console.WriteLine($"Playing with {Usernames}");
             return (_map.UCoord(src.X, src.Y), _map.UCoord(referers[src].X, referers[src].Y), false);
+        }
+
+        public string Usernames {
+            get { return _usernames.Aggregate((c, s) => c + " " + s); }
         }
 
         private IList<int> Patch(IList<int> existing, IList<int> delta) {
