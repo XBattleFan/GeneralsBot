@@ -9,7 +9,7 @@ using Quobject.SocketIoClientDotNet.Client;
 
 namespace GeneralsBot {
     public class GeneralsBot {
-        private const    string                 Username      = "[Bot] Ashley_Bot";
+        private readonly string                 Username      = File.ReadAllText("username");
         private readonly string                 _userId       = File.ReadAllText("user_id");
         private          Game                   _game;
         private          Socket                 _socket;
