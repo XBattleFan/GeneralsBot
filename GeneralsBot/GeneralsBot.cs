@@ -62,6 +62,7 @@ namespace GeneralsBot {
                 _socket.Emit("attack", start, end, is50);
             } catch (Exception e) {
                 Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
             }
         }
 
