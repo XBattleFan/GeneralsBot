@@ -130,11 +130,16 @@ namespace GeneralsBot {
                     var unitEquivalenceNeighbor = MyUnitEquivalenceOn(_map[neighbor]) - 1;
                     var neighborVal             = destValue[current]                  + unitEquivalenceNeighbor;
                     var pointsVal               =
-                        points[current] + 10 * unitEquivalenceNeighbor - _turn / 10 - 40;
+                        points[current] + 10 * unitEquivalenceNeighbor - _turn / 10 - 5;
+                                        
                     if (_map[dest] is OccupiedTile occup && occup.Faction != _me) {
-                        if (neighborVal > occup.Units + 1 && destValue[current] < occup.Units + 1) {
-                            pointsVal += 10 + (Distance(referers, neighbor) * 40);
+                        if (destValue[current] > occup.Units + 1) {
+                            pointsVal -= 60 + (_turn / 10) * Distance(referers, neighbor);
                         }
+                    }
+
+                    if (_map[dest] is EmptyTile && destValue[current] > 100) {
+                        pointsVal -= 50;
                     }
 
                     if (!points.ContainsKey(neighbor) || points[neighbor] < pointsVal) {
@@ -166,6 +171,7 @@ namespace GeneralsBot {
             while (PointlessMove(src, referers[src]) && points.Count > 0) {
                 points.Remove(src);
                 src = BestMove(points);
+                if (src == null) break;
             }
 
             if (points.Count == 0) return (null, null);
