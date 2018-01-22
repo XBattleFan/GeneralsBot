@@ -91,6 +91,6 @@ namespace GeneralsBot {
             Console.WriteLine(Environment.NewLine);
         }
 
-        public object this[Position position] => this[position.X, position.Y];
+        public GameTile this[Position position] => this[position.X, position.Y];
     }
 }

@@ -24,7 +24,7 @@ namespace GeneralsBot {
 
             _socket.On(Socket.EVENT_CONNECT, () => {
                 Console.WriteLine("Connected");
-
+                _socket.Emit("set_username", _userId, Username);
                 _socket.Emit("play", _userId);
                 //_socket.Emit("join_private",    "mtpe", _userId);
                 _socket.Emit("set_force_start", 0, true);

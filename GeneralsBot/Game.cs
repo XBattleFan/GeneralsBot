@@ -21,6 +21,7 @@ namespace GeneralsBot {
         private          IList<int>    _rawMap;
         private          GameMap       _map;
         private readonly IList<ITargetHeuristic> _targetHeuristics;
+        private readonly HashSet<int> _generals = new HashSet<int>();
 
         public Game(int           playerIndex,
                     IList<string> usernames,
@@ -51,6 +52,9 @@ namespace GeneralsBot {
             _cities = Patch(_cities, message.CitiesDiff);
             _rawMap = Patch(_rawMap, message.MapDiff);
 
+            foreach (var g in message.Generals) _generals.Add(g);
+            foreach (var g in _generals) if (!message.Generals.Contains(g)) message.Generals.Add(g);
+
             _map = GameMap.FromRawLists(_rawMap, _cities, message.Generals);
             _map.PrettyPrint();
         }
@@ -64,71 +68,119 @@ namespace GeneralsBot {
                 desiredTargets.AddRange(heuristic.Calculate(_map, _me));
             }
             
-            Console.WriteLine(desiredTargets.Count);
+            Console.WriteLine($"{desiredTargets.Count} potential targets");
 
             var grouped = from desired in desiredTargets
                           group (desired.priority, desired.dest) by desired.dest;
 
-            (int priority, Position dest) = desiredTargets.GroupBy(x => x.dest)
-                                                          .Select(g => (g.Sum(x => x.priority), g.Key))
-                                                          .OrderByDescending<(int priority, Position dest), int>
-                                                              (k => k.priority).First();
+            var descendingTargets = desiredTargets.GroupBy(x => x.dest)
+                                                  .Select(g => (g.Sum(x => x.priority), g.Key))
+                                                  .OrderByDescending<(int priority, Position dest), int>
+                                                      (k => k.priority).ToList();
+
+            Position src, toward;
             
-            Console.WriteLine($"AI desires a move with priority {priority} to <{dest.X}, {dest.Y}>");
-            
-            // Who shall we send? TODO: Move to a heuristic system
-            Queue<Position> queuedPositions = new Queue<Position>();
-            HashSet<Position> testedPositions = new HashSet<Position> { dest };
-            Dictionary<Position, Position> referers = new Dictionary<Position, Position> { { dest, dest } };
-            Dictionary<Position, int> destValue = new Dictionary<Position, int> { { dest, 0 } };
-            Dictionary<Position, int> points = new Dictionary<Position, int> { { dest, Int32.MinValue } };
-            
-            foreach (Position position in dest.SurroundingMoveable(_map)) {
-                queuedPositions.Enqueue(position);
-                testedPositions.Add(position);
-                referers[position] = dest;
+            while (true) {
+                (int priority, Position dest) = descendingTargets.First();
+                descendingTargets.Remove((priority, dest));
+
+                Console.WriteLine($"AI desires a move with priority {priority} to <{dest.X}, {dest.Y}>");
+
+                // Who shall we send? TODO: Move to a heuristic system
+                (src, toward) = CalculateBestMoveTowards(dest);
+
+                if (src != null || toward != null) break;
+                if (descendingTargets.Count == 0) throw new Exception("Ran out of possible moves");
             }
             
-            while (queuedPositions.Count > 0) {
-                Position next = queuedPositions.Dequeue();
-                
-                if (_map[next] is FogTile || _map[next] is MountainTile) continue;
 
-                if (_map[referers[next]] is OccupiedTile referredMapTile && referredMapTile.Faction == _me) {
-                    destValue[next] = referredMapTile.Units;
-                } else {
-                    destValue[next] = 0;
-                    
-                    if (_map[referers[next]] is OccupiedTile otherTile) {
-                        destValue[next] = -otherTile.Units;
+            Console.WriteLine($"Best move is from {src.X} {src.Y}");
+
+            Console.WriteLine($"Issued move from {src.X} {src.Y} to {toward.X} {toward.Y}");
+            Console.WriteLine($"Playing with {Usernames}");
+            return (_map.UCoord(src.X, src.Y), _map.UCoord(toward.X, toward.Y), false);
+        }
+
+        private (Position, Position) CalculateBestMoveTowards(Position dest) {
+            IList<Position> queuedPositions = new List<Position>();
+            HashSet<Position> testedPositions = new HashSet<Position>();
+            Dictionary<Position, Position> referers = new Dictionary<Position, Position>();
+            Dictionary<Position, int> destValue = new Dictionary<Position, int>();
+            Dictionary<Position, int> points = new Dictionary<Position, int>();
+
+            Position current     = dest;
+            referers[current]    = current;
+            GameTile currentTile = _map[dest];
+            queuedPositions.Add(current);
+            points[current]    = 0;
+            destValue[current] = MyUnitEquivalenceOn(currentTile);
+
+            while (queuedPositions.Count > 0) {
+                testedPositions.Add(current);
+
+                foreach (Position neighbor in current.SurroundingMoveable(_map)) {
+                    if (_map[neighbor] is FogTile || _map[neighbor] is MountainTile) continue;
+
+                    if (!testedPositions.Contains(neighbor)) {
+                        queuedPositions.Add(neighbor);
+                    } else {
+                        continue;
+                    }
+
+                    var unitEquivalenceNeighbor = MyUnitEquivalenceOn(_map[neighbor]) - 1;
+                    var neighborVal             = destValue[current]                  + unitEquivalenceNeighbor;
+                    var pointsVal               =
+                        points[current] + 10 * unitEquivalenceNeighbor - _turn / 100 - 30;
+
+                    if (!points.ContainsKey(neighbor) || points[neighbor] < pointsVal) {
+                        destValue[neighbor] = neighborVal;
+                        points[neighbor]    = pointsVal;
+                        referers[neighbor]  = current;
                     }
                 }
-                
-                if (_map[next] is OccupiedTile tile && tile.Faction == _me && tile.Units > 1) {
-                    destValue[next] += tile.Units - 1;
-                } else {
-                    points[next] = Int32.MinValue;
+
+                queuedPositions.Remove(current);
+
+                int maxPoints = Int32.MinValue;
+                current       = null;
+
+                foreach (Position queuedPosition in queuedPositions) {
+                    if (points.ContainsKey(queuedPosition) && maxPoints < points[queuedPosition]) {
+                        maxPoints = points[queuedPosition];
+                        current   = queuedPosition;
+                    }
                 }
 
-                if (!points.ContainsKey(next)) {
-                    points[next] = destValue[next] - 5 * next.NaiveMoveDistance(dest);
-
-                    if (destValue[next] < -(_map.UnitsAt(next) / 2)) points[next] -= 10000;
-                }
-
-                foreach (Position p in next.SurroundingMoveable(_map)) {
-                    if (testedPositions.Contains(p)) continue;
-                    
-                    queuedPositions.Enqueue(p);
-                    testedPositions.Add(p);
-                    referers[p] = next;
-                }
+                if (current == null) break;
             }
 
-            Position src = points.OrderByDescending(pair => pair.Value).Select(pair => pair.Key).FirstOrDefault();
-            Console.WriteLine($"Issued move from {src.X} {src.Y} to {referers[src].X} {referers[src].Y}");
-            Console.WriteLine($"Playing with {Usernames}");
-            return (_map.UCoord(src.X, src.Y), _map.UCoord(referers[src].X, referers[src].Y), false);
+            points[dest] = Int32.MinValue;
+
+            Position src = BestMove(points);
+
+            while (PointlessMove(src, referers[src]) && points.Count > 0) {
+                points.Remove(src);
+                src = BestMove(points);
+            }
+
+            if (points.Count == 0) return (null, null);
+            
+            return (src, referers[src]);
+        }
+
+        private bool PointlessMove(Position src, Position dest) {
+            return src.Equals(dest) || MyUnitEquivalenceOn(_map[src]) <= 1;
+        }
+
+        private static Position BestMove(Dictionary<Position, int> points) {
+            Position            src = points.OrderByDescending(pair => pair.Value).Select(pair => pair.Key).FirstOrDefault();
+            return src;
+        }
+
+        private int MyUnitEquivalenceOn(GameTile currentTile) {
+            return currentTile is OccupiedTile occTile
+                       ? (occTile.Faction == _me ? occTile.Units : -occTile.Units)
+                       : 0;
         }
 
         public string Usernames {

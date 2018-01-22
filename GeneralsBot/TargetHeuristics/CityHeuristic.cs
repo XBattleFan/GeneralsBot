@@ -10,10 +10,10 @@ namespace GeneralsBot.TargetHeuristics {
                 for (int y = 0; y < map.Height; y++) {
                     if (map[x, y] is CityTile tile && tile.Faction != playerIndex) {
                         Position position = new Position(x, y);
-                        if (map.UnitsAt(position) == 0) desireds.Add((50000, position));
-                        desireds.Add((-75 + (int) Math.Pow(Math.E, Math.Min(map.TotalArmies(playerIndex)
-                                                                 / (float) map.UnitsAt(position), 10)),
-                                     position));
+                        int totalArmies = map.TotalArmies(playerIndex);
+                        if (totalArmies > 80) {
+                            desireds.Add((Math.Min(totalArmies - tile.Units, 50), position));
+                        }
                     }
                 }
             }
