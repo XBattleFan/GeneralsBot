@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneralsBot.TargetHeuristics {
     public class CityHeuristic : ITargetHeuristic {
@@ -12,7 +13,14 @@ namespace GeneralsBot.TargetHeuristics {
                         Position position = new Position(x, y);
                         int totalArmies = map.TotalArmies(playerIndex);
                         if (totalArmies > 80) {
-                            desireds.Add((Math.Min(totalArmies - tile.Units, 50), position));
+                            desireds.Add((totalArmies - tile.Units, position));
+                        }
+
+                        if (position.SurroundingMoveable(map)
+                                    .Any(p => map[p] is OccupiedTile t && t.Units      > tile.Units
+                                                                       && t.Faction    == playerIndex
+                                                                       && tile.Faction == 0)) {
+                            desireds.Add((1000, position));
                         }
                     }
                 }
