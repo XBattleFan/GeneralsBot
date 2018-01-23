@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneralsBot.TargetHeuristics {
     public class AttackHeuristic : ITargetHeuristic {
@@ -17,6 +18,9 @@ namespace GeneralsBot.TargetHeuristics {
                         if (position.NaiveMoveDistance(map.GeneralPosition(playerIndex)) < 5) {
                             desire += (6 - position.NaiveMoveDistance(map.GeneralPosition(playerIndex))) * 250;
                         }
+
+                        desire += 10 * position.SurroundingMoveable(map).Count(p => map[p] is FogTile);
+                        
                         desireds.Add((desire, position));
                     }
                 }

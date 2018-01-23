@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Pipes;
 using System.Linq;
 using System.Net.Mail;
 using System.Runtime.InteropServices.ComTypes;
@@ -102,6 +103,16 @@ namespace GeneralsBot {
         }
 
         private (Position, Position) CalculateBestMoveTowards(Position dest) {
+            
+            // Quick override for if you can capture it immediately..
+            if (_map[dest] is OccupiedTile enemyOcc && enemyOcc.Faction != _me) {
+                foreach (Position p in dest.SurroundingMoveable(_map)) {
+                    if (_map[p] is OccupiedTile occ && occ.Faction == _me && occ.Units > enemyOcc.Units + 1) {
+                        return (p, dest);
+                    }
+                }
+            }
+
             IList<Position> queuedPositions = new List<Position>();
             HashSet<Position> testedPositions = new HashSet<Position>();
             Dictionary<Position, Position> referers = new Dictionary<Position, Position>();
