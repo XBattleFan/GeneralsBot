@@ -111,6 +111,12 @@ namespace GeneralsBot {
                         return (p, dest);
                     }
                 }
+            } else if (_map[dest] is EmptyTile emp) {
+                foreach (Position p in dest.SurroundingMoveable(_map)) {
+                    if (_map[p] is OccupiedTile occ && occ.Faction == _me && occ.Units > 1) {
+                        return (p, dest);
+                    }
+                }
             }
 
             IList<Position> queuedPositions = new List<Position>();
@@ -149,8 +155,18 @@ namespace GeneralsBot {
                         }
                     }
 
-                    if (_map[dest] is EmptyTile && destValue[current] > 100) {
+                    if (_map[dest] is EmptyTile && _turn < 100 && destValue[current] > 1) {
                         pointsVal -= 50;
+                    }
+
+                    if (_map[dest] is CityTile cTile && cTile.Faction == 0
+                                                     && dest.Surrounding(_map)
+                                                            .All(c => !(_map[c] is OccupiedTile occT && occT.Faction > 0
+                                                                                                     && occT.Faction
+                                                                                                     != _me))) {
+                        if (destValue[current] > cTile.Units + 2) {
+                            pointsVal -= 5000;
+                        }
                     }
 
                     if (!points.ContainsKey(neighbor) || points[neighbor] < pointsVal) {
