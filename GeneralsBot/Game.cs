@@ -139,7 +139,7 @@ namespace GeneralsBot {
                 testedPositions.Add(current);
 
                 foreach (Position neighbor in current.SurroundingMoveable(_map)) {
-                    if (_map[neighbor] is FogTile || _map[neighbor] is MountainTile) continue;
+                    if (_map[neighbor] is MountainTile) continue;
 
                     if (!testedPositions.Contains(neighbor)) {
                         queuedPositions.Add(neighbor);

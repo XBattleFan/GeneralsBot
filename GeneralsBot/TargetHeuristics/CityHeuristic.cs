@@ -12,7 +12,7 @@ namespace GeneralsBot.TargetHeuristics {
                     if (map[x, y] is CityTile tile && tile.Faction != playerIndex) {
                         Position position = new Position(x, y);
                         int totalArmies = map.TotalArmies(playerIndex);
-                        if (totalArmies > 80) {
+                        if (totalArmies > 75) {
                             desireds.Add((totalArmies - tile.Units, position));
                         }
 

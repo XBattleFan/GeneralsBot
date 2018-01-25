@@ -37,6 +37,12 @@ namespace GeneralsBot {
                 bool hasCity    = HasCity(x, y);
                 bool hasGeneral = HasGeneral(x, y);
                 switch (TerrainAt(x, y)) {
+                    case TILE_FOG when hasGeneral:
+                        return new FogTile(true, typeof(GeneralTile));
+                    
+                    case TILE_FOG when hasCity:
+                        return new FogTile(true, typeof(CityTile));
+                        
                     case TILE_FOG:
                         return new FogTile();
 
