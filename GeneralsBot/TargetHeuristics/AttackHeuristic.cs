@@ -16,7 +16,7 @@ namespace GeneralsBot.TargetHeuristics {
                         else if (map.UnitsAt(position) <= 2) desire /= 2;
                         if (tile is GeneralTile) desire += 100000000;
                         if (position.NaiveMoveDistance(map.GeneralPosition(playerIndex)) < 5) {
-                            desire += (6 - position.NaiveMoveDistance(map.GeneralPosition(playerIndex))) * 250;
+                            desire += 1000;
                         }
 
                         desire += 10 * position.SurroundingMoveable(map).Count(p => map[p] is FogTile);

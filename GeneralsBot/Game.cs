@@ -46,7 +46,10 @@ namespace GeneralsBot {
             return new Game(gameStartMessage.PlayerIndex, gameStartMessage.Usernames, gameStartMessage.Teams,
                             gameStartMessage.ReplayId, gameStartMessage.ChatRoom, gameStartMessage.TeamChatRoom,
                             gameStartMessage.GameType,
-                            new List<ITargetHeuristic> { new ExpandHeuristic(), new CityHeuristic(), new AttackHeuristic() });
+                            new List<ITargetHeuristic> {
+                                new ExpandHeuristic(), new CityHeuristic(), new AttackHeuristic(),
+                             //  new DefendKingHeuristic()
+                            });
         }
 
         public void ApplyUpdate(GameUpdateMessage message) {

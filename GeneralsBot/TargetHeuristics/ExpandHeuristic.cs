@@ -17,7 +17,7 @@ namespace GeneralsBot.TargetHeuristics {
 
                             int points = - p.NaiveMoveDistance(map.GeneralPosition(playerIndex));
                             if (map[p.X, p.Y] is OccupiedTile occupied) points -= occupied.Units;
-                            if (tile.Units > 1) points += tile.Units;
+                            if (tile.Units > 1) points += tile.Units * 10;
                             desireds.Add((points, p));
                         }
                     }

@@ -33,12 +33,16 @@ namespace GeneralsBot {
         }
 
         public IList<Position> Surrounding(GameMap map, bool include = false) {
+            return Surrounding(map, 1, include);
+        }
+
+        public IList<Position> Surrounding(GameMap map, int distance, bool include = false) {
             IList<Position> positions = new List<Position>();
             
-            for (int x = Math.Max(X - 1, 0); x <= Math.Min(X + 1, map.Width - 1); x++) {
-                for (int y = Math.Max(Y - 1, 0); y <= Math.Min(Y + 1, map.Height - 1); y++) {
+            for (int x = Math.Max(X     - distance, 0); x <= Math.Min(X + distance, map.Width  - 1); x++) {
+                for (int y = Math.Max(Y - distance, 0); y <= Math.Min(Y + distance, map.Height - 1); y++) {
                     if (!include && new Position(x, y).Equals(this)) continue;
-                    positions.Add(new Position(x, y));
+                    positions.Add(new Position(x,   y));
                 }
             }
 
