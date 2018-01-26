@@ -23,6 +23,7 @@ namespace GeneralsBot {
         private          GameMap       _map;
         private readonly IList<ITargetHeuristic> _targetHeuristics;
         private readonly HashSet<int> _generals = new HashSet<int>();
+        private readonly HashSet<int> _allCities = new HashSet<int>();
 
         public Game(int           playerIndex,
                     IList<string> usernames,
@@ -58,8 +59,12 @@ namespace GeneralsBot {
 
             foreach (var g in message.Generals) _generals.Add(g);
             foreach (var g in _generals) if (!message.Generals.Contains(g)) message.Generals.Add(g);
+            
+            foreach (int city in _cities) {
+                _allCities.Add(city);
+            }
 
-            _map = GameMap.FromRawLists(_rawMap, _cities, message.Generals);
+            _map = GameMap.FromRawLists(_rawMap, _allCities, message.Generals);
             _map.PrettyPrint();
         }
 
@@ -90,7 +95,6 @@ namespace GeneralsBot {
 
                 Console.WriteLine($"AI desires a move with priority {priority} to <{dest.X}, {dest.Y}>");
 
-                // Who shall we send? TODO: Move to a heuristic system
                 (src, toward) = CalculateBestMoveTowards(dest);
 
                 if (src != null || toward != null) break;
@@ -137,11 +141,11 @@ namespace GeneralsBot {
 
             while (queuedPositions.Count > 0) {
                 testedPositions.Add(current);
-
+                
                 foreach (Position neighbor in current.SurroundingMoveable(_map)) {
                     if (_map[neighbor] is MountainTile) continue;
 
-                    if (!testedPositions.Contains(neighbor)) {
+                    if (!testedPositions.Contains(neighbor) && !queuedPositions.Contains(neighbor)) {
                         queuedPositions.Add(neighbor);
                     } else {
                         continue;
@@ -193,6 +197,8 @@ namespace GeneralsBot {
 
                 if (current == null) break;
             }
+            
+            Console.WriteLine("Calculated path data towards position");
 
             points[dest] = Int32.MinValue;
 

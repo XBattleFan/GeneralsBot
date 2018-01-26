@@ -5,9 +5,9 @@ namespace GeneralsBot {
         public readonly bool Seen;
         public readonly Type KnownType;
         
-        public FogTile(bool seen = false, Type knownType = typeof(GameTile)) {
+        public FogTile(bool seen = false, Type knownType = null) {
             Seen = seen;
-            KnownType = knownType;
+            KnownType = knownType ?? typeof(GameTile);
         }
 
         public override void PrettyPrint() {
