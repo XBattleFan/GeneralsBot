@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Pipes;
 using System.Linq;
-using System.Net.Mail;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Security.Cryptography;
 using GeneralsBot.TargetHeuristics;
 
 namespace GeneralsBot {
@@ -49,6 +44,7 @@ namespace GeneralsBot {
                             gameStartMessage.GameType,
                             new List<ITargetHeuristic> {
                                 new ExpandHeuristic(), new CityHeuristic(), new AttackHeuristic(),
+                                new CapturePlayerHeuristic()
                              //  new DefendKingHeuristic()
                             });
         }
@@ -101,8 +97,6 @@ namespace GeneralsBot {
                 if (descendingTargets.Count == 0) throw new Exception("Ran out of possible moves");
             }
             
-
-            Console.WriteLine($"Best move is from {src.X} {src.Y}");
 
             Console.WriteLine($"Issued move from {src.X} {src.Y} to {toward.X} {toward.Y}");
             Console.WriteLine($"Playing with {Usernames}");

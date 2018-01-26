@@ -14,7 +14,6 @@ namespace GeneralsBot.TargetHeuristics {
                         desire *= 3;
                         if (map.UnitsAt(position) <= 2 && desire >= 0) desire *= 2;
                         else if (map.UnitsAt(position) <= 2) desire /= 2;
-                        if (tile is GeneralTile) desire += 100000000;
                         if (position.NaiveMoveDistance(map.GeneralPosition(playerIndex)) < 5) {
                             desire += 1000;
                         }

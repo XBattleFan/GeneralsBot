@@ -13,7 +13,7 @@ namespace GeneralsBot {
         private readonly string _userId       = File.ReadAllText("user_id");
         private          Game   _game;
         private          Socket _socket;
-        private readonly bool   _privateGame = true;
+        private readonly bool   _privateGame = false;
 
         public void Start() {
             _socket = Connect();
