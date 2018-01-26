@@ -19,6 +19,7 @@ namespace GeneralsBot {
         private readonly IList<ITargetHeuristic> _targetHeuristics;
         private readonly HashSet<int> _generals = new HashSet<int>();
         private readonly HashSet<int> _allCities = new HashSet<int>();
+        private readonly HashSet<int> _seen = new HashSet<int>();
 
         public Game(int           playerIndex,
                     IList<string> usernames,
@@ -59,8 +60,8 @@ namespace GeneralsBot {
             foreach (int city in _cities) {
                 _allCities.Add(city);
             }
-
-            _map = GameMap.FromRawLists(_rawMap, _allCities, message.Generals);
+            
+            _map = GameMap.FromRawLists(_rawMap, _allCities, message.Generals, _seen);
             _map.PrettyPrint();
         }
 

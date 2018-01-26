@@ -6,13 +6,19 @@ using System.Runtime.CompilerServices;
 
 namespace GeneralsBot {
     public class GameMap {
-        private const int TILE_EMPTY        = -1;
-        private const int TILE_MOUNTAIN     = -2;
-        private const int TILE_FOG          = -3;
-        private const int TILE_FOG_OBSTACLE = -4;
+        public const int TileEmpty       = -1;
+        public const int TileMountain    = -2;
+        public const int TileFog         = -3;
+        public const int TileFogObstacle = -4;
 
         public           int        Width  { get; }
         public           int        Height { get; }
+
+        public IList<int> CurrentVisiblePositions => _terrainValues.Select((v, i) => new { v, i })
+                                                            .Where(x => x.v > TileFog)
+                                                            .Select(x => x.i).ToList();
+
+        private readonly HashSet<int> _seen;
         private readonly IList<int> _armyValues;
         private readonly IList<int> _terrainValues;
         private readonly HashSet<int> _cities;
@@ -23,13 +29,19 @@ namespace GeneralsBot {
                         IList<int> armyValues,
                         IList<int> terrainValues,
                         HashSet<int> cities,
-                        IList<int> generals) {
+                        IList<int> generals,
+                        HashSet<int> seen) {
             Width          = width;
             Height         = height;
             _armyValues    = armyValues;
             _terrainValues = terrainValues;
             _cities        = cities;
             _generals      = generals;
+            _seen = seen;
+            
+            foreach (int p in CurrentVisiblePositions) {
+                _seen.Add(p);
+            }
         }
 
         public GameTile this[int x, int y] {
@@ -37,23 +49,23 @@ namespace GeneralsBot {
                 bool hasCity    = HasCity(x, y);
                 bool hasGeneral = HasGeneral(x, y);
                 switch (TerrainAt(x, y)) {
-                    case TILE_FOG when hasGeneral:
+                    case TileFog when hasGeneral:
                         return new FogTile(true, typeof(GeneralTile));
 
-                    case TILE_FOG:
+                    case TileFog:
                         return new FogTile();
                         
-                    case TILE_FOG_OBSTACLE when hasCity:
+                    case TileFogObstacle when hasCity:
                         return new FogTile(true, typeof(CityTile));
 
-                    case TILE_FOG_OBSTACLE:
+                    case TileFogObstacle:
                         return new ObstacleFogTile();
 
-                    case TILE_EMPTY:
+                    case TileEmpty:
                         if (hasCity) return new CityTile(TerrainAt(x, y), ArmyAt(x, y));
                         return new EmptyTile();
 
-                    case TILE_MOUNTAIN:
+                    case TileMountain:
                         return new MountainTile();
 
                     default:
@@ -72,16 +84,17 @@ namespace GeneralsBot {
         public  int      UCoord(Position p)        => UCoord(p.X, p.Y);
         public  int      UnitsAt(Position p)       => ArmyAt(p.X, p.Y);
         public  int      TotalArmies(int index)    => _armyValues.Where((c, i) => _terrainValues[i] == index).Sum();
+        public  bool     EverSeen(Position p)      => _seen.Contains(UCoord(p));
         private Position FromUCoord(int  c)        => new Position(c % Width, c / Width);
 
         public Position GeneralPosition(int playerIndex) {
             return FromUCoord(_generals[playerIndex]);
         }
 
-        public static GameMap FromRawLists(IList<int> map, HashSet<int> cities, IList<int> generals) {
+        public static GameMap FromRawLists(IList<int> map, HashSet<int> cities, IList<int> generals, HashSet<int> seen) {
             int size = map[0] * map[1];
             return new GameMap(map[0], map[1], map.Skip(2).Take(size).ToList(), map.Skip(2 + size).ToList(),
-                               cities, generals);
+                               cities, generals, seen);
         }
 
         public void PrettyPrint() {
