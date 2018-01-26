@@ -18,7 +18,8 @@ namespace GeneralsBot.TargetHeuristics {
                             desire += 1000;
                         }
 
-                        desire += 10 * position.SurroundingMoveable(map).Count(p => map[p] is FogTile);
+                        desire += 10  * position.SurroundingMoveable(map).Count(p => map[p] is FogTile);
+                        desire += 100 * position.SurroundingMoveable(map).Count(p => !map.EverSeen(p));
                         
                         desireds.Add((desire, position));
                     }
