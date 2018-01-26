@@ -17,6 +17,7 @@ namespace GeneralsBot {
         private          IList<int>    _rawMap;
         private          GameMap       _map;
         private readonly IList<ITargetHeuristic> _targetHeuristics;
+        private readonly IList<int> _lastSeenArmies = new List<int>();
         private readonly HashSet<int> _generals = new HashSet<int>();
         private readonly HashSet<int> _allCities = new HashSet<int>();
         private readonly HashSet<int> _seen = new HashSet<int>();
@@ -61,7 +62,7 @@ namespace GeneralsBot {
                 _allCities.Add(city);
             }
             
-            _map = GameMap.FromRawLists(_rawMap, _allCities, message.Generals, _seen);
+            _map = GameMap.FromRawLists(_rawMap, _allCities, message.Generals, _seen, _lastSeenArmies);
             _map.PrettyPrint();
         }
 
@@ -151,10 +152,10 @@ namespace GeneralsBot {
                     var pointsVal               =
                         points[current] + 10 * unitEquivalenceNeighbor - _turn / 10 - 5;
                                         
-                    if (_map[dest] is OccupiedTile occup && occup.Faction != _me) {
-                        if (destValue[current] > occup.Units + 1) {
-                            pointsVal -= 60 + (_turn / 10) * Distance(referers, neighbor);
-                        }
+                    if (_map[dest] is OccupiedTile occup && occup.Faction != _me
+                                                         && destValue[current] > occup.Units + 1
+                        || _map[dest] is FogTile && destValue[current] > _map.EstUnitsAt(dest) * 1.2f) {
+                        pointsVal -= 60 + (_turn / 10) * Distance(referers, neighbor);
                     }
 
                     if (_map[dest] is EmptyTile && _turn < 100 && destValue[current] > 1) {

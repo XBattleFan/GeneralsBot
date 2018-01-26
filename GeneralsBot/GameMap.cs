@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace GeneralsBot {
     public class GameMap {
@@ -19,6 +20,7 @@ namespace GeneralsBot {
                                                             .Select(x => x.i).ToList();
 
         private readonly HashSet<int> _seen;
+        private readonly IList<int> _lastSeenArmies;
         private readonly IList<int> _armyValues;
         private readonly IList<int> _terrainValues;
         private readonly HashSet<int> _cities;
@@ -30,7 +32,8 @@ namespace GeneralsBot {
                         IList<int> terrainValues,
                         HashSet<int> cities,
                         IList<int> generals,
-                        HashSet<int> seen) {
+                        HashSet<int> seen,
+                        IList<int> lastSeenArmies) {
             Width          = width;
             Height         = height;
             _armyValues    = armyValues;
@@ -38,9 +41,22 @@ namespace GeneralsBot {
             _cities        = cities;
             _generals      = generals;
             _seen = seen;
-            
+            _lastSeenArmies = lastSeenArmies;
+
             foreach (int p in CurrentVisiblePositions) {
                 _seen.Add(p);
+            }
+
+            if (_lastSeenArmies.Count == 0) {
+                foreach (int p in _armyValues) {
+                    _lastSeenArmies.Add(p);
+                }
+            } else {
+                for (int i = 0; i < _armyValues.Count; i++) {
+                    if (terrainValues[i] >= TileEmpty) {
+                        _lastSeenArmies[i] = _armyValues[i];
+                    }
+                }
             }
         }
 
@@ -83,6 +99,7 @@ namespace GeneralsBot {
         public  int      UCoord(int      x, int y) => x + y * Width;
         public  int      UCoord(Position p)        => UCoord(p.X, p.Y);
         public  int      UnitsAt(Position p)       => ArmyAt(p.X, p.Y);
+        public  int      EstUnitsAt(Position p)    => _lastSeenArmies[UCoord(p.X, p.Y)];
         public  int      TotalArmies(int index)    => _armyValues.Where((c, i) => _terrainValues[i] == index).Sum();
         public  bool     EverSeen(Position p)      => _seen.Contains(UCoord(p));
         private Position FromUCoord(int  c)        => new Position(c % Width, c / Width);
@@ -91,10 +108,11 @@ namespace GeneralsBot {
             return FromUCoord(_generals[playerIndex]);
         }
 
-        public static GameMap FromRawLists(IList<int> map, HashSet<int> cities, IList<int> generals, HashSet<int> seen) {
+        public static GameMap FromRawLists(IList<int> map, HashSet<int> cities, IList<int> generals, HashSet<int> seen,
+                                           IList<int> lastSeenArmies) {
             int size = map[0] * map[1];
             return new GameMap(map[0], map[1], map.Skip(2).Take(size).ToList(), map.Skip(2 + size).ToList(),
-                               cities, generals, seen);
+                               cities, generals, seen, lastSeenArmies);
         }
 
         public void PrettyPrint() {
@@ -103,11 +121,8 @@ namespace GeneralsBot {
                     this[x, y].PrettyPrint();
                 }
 
-                Console.WriteLine(Environment.NewLine);
+                Console.Write(Environment.NewLine);
             }
-
-            Console.WriteLine(Environment.NewLine);
-            Console.WriteLine(Environment.NewLine);
         }
 
         public GameTile this[Position position] => this[position.X, position.Y];
